@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Multiplication Worksheet Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    h2 {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+    .header-section input {
+      margin-right: 10px;
+      padding: 5px;
+      font-size: 16px;
+    }
+    .worksheet {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 20px;
+      font-size: 18px;
+    }
+    .column {
+      flex: 1;
+      min-width: 150px;
+    }
+    .question {
+      margin-bottom: 10px;
+    }
+    #preview {
+      padding: 20px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div id="preview">
+    <h1>“Let’s play with numbers today! and become smarter everyday ：）”</h1>
+
+    <div class="header-section">
+      <h2>
+        Name: <input type="text" id="childName">
+        Age: <input type="text" id="childAge">
+        Date: <input type="date" id="todayDate">
+      </h2>
+      <h2>
+        Teacher: <input type="text" id="teacherName">
+        Score: <input type="text" id="score">
+      </h2>
+    </div>
+
+    <div>
+      <label><strong>How many questions? </strong></label>
+      <input type="number" id="numQuestions" value="40" min="1" max="144">
+      <button onclick="generateQuestions()">Generate</button>
+      <button onclick="downloadPDF()">Download PDF</button>
+    </div>
+
+    <div class="worksheet" id="questionsContainer"></div>
+  </div>
+
+  <script>
+    function generateQuestions() {
+      const num = parseInt(document.getElementById('numQuestions').value);
+      const questions = [];
+      for (let i = 2; i <= 12; i++) {
+        for (let j = 1; j <= 12; j++) {
+          questions.push(`${i} x ${j} = ______`);
+        }
+      }
+      const shuffled = questions.sort(() => Math.random() - 0.5).slice(0, num);
+
+      const container = document.getElementById('questionsContainer');
+      container.innerHTML = '';
+      let col, count = 0;
+
+      shuffled.forEach((q, index) => {
+        if (index % 20 === 0) {
+          col = document.createElement('div');
+          col.className = 'column';
+          container.appendChild(col);
+        }
+        const div = document.createElement('div');
+        div.className = 'question';
+        div.textContent = q;
+        col.appendChild(div);
+      });
+    }
+
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const name = document.getElementById('childName').value || '';
+      const age = document.getElementById('childAge').value || '';
+      const date = document.getElementById('todayDate').value || '';
+      const teacher = document.getElementById('teacherName').value || '';
+      const score = document.getElementById('score').value || '';
+
+      html2canvas(document.getElementById('preview')).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'pt', 'a4');
+        const width = pdf.internal.pageSize.getWidth();
+        const height = pdf.internal.pageSize.getHeight();
+        pdf.addImage(imgData, 'PNG', 20, 20, width - 40, 0);
+        pdf.save(`worksheet_${name || 'student'}.pdf`);
+      });
+    }
+  </script>
+</body>
+</html>
