@@ -41,28 +41,41 @@
       border-radius: 6px;
       background-color: #f9f9f9;
     }
-    /* Make each field’s label an H2, left-aligned */
-    #controls h2 {
-      font-size: 1.2em;
-      margin: 10px 0 4px 0;
+    /* Container for each row of fields */
+    .form-row {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      /* Ensures label/input align to left */
+      width: 220px;
+    }
+    /* Each label is now an H1, left-aligned */
+    .form-field h1 {
+      font-size: 1.5em;
+      margin: 0;
       text-align: left;
     }
-    #controls input[type="text"],
-    #controls input[type="number"],
-    #controls input[type="date"] {
-      display: block;
-      margin: 4px 0 12px 0;
+    /* Inputs appear directly beneath their H1 label */
+    .form-field input {
+      margin-top: 6px;
       padding: 6px 8px;
       font-size: 1em;
-      width: 260px;
+      width: 100%;
     }
-    #controls input[type="number"] {
-      width: 100px;
+    /* Specific width for the date picker */
+    #worksheet-date {
+      width: 160px;
     }
+    /* Buttons */
     #controls button {
       padding: 8px 16px;
       font-size: 1em;
-      margin-top: 10px;
       margin-right: 10px;
       cursor: pointer;
     }
@@ -79,7 +92,7 @@
       font-weight: bold;
       margin-bottom: 15px;
     }
-    /* Each header detail is now an H2, left-aligned */
+    /* Each detail line remains H2, left-aligned */
     .worksheet-page .detail-line {
       margin: 4px 0;
       font-size: 1.1em;
@@ -113,33 +126,51 @@
 <body>
   <!-- ===== CONTROLS / FORM ===== -->
   <div id="controls">
-    <h2>Worksheet Settings</h2>
-    <form id="worksheet-form" onsubmit="return false;">
-      <!-- Now each field is an H2, left-aligned, followed by its input -->
-      <h2>Name:</h2>
-      <input type="text" id="child-name" placeholder="Child’s Name" required />
+    <!-- First Row: Name, Age, Date -->
+    <div class="form-row">
+      <div class="form-field">
+        <h1>Name:</h1>
+        <input type="text" id="child-name" placeholder="Child’s Name" required />
+      </div>
+      <div class="form-field">
+        <h1>Age:</h1>
+        <input type="number" id="child-age" min="1" max="18" placeholder="Age" required />
+      </div>
+      <div class="form-field">
+        <h1>Date:</h1>
+        <input type="date" id="worksheet-date" required />
+      </div>
+    </div>
 
-      <h2>Age:</h2>
-      <input type="number" id="child-age" min="1" max="18" placeholder="Age" required />
+    <!-- Second Row: Teacher, Score -->
+    <div class="form-row">
+      <div class="form-field">
+        <h1>Teacher:</h1>
+        <input type="text" id="teacher-name" placeholder="Teacher’s Name" required />
+      </div>
+      <div class="form-field">
+        <h1>Score:</h1>
+        <input type="text" id="score" placeholder="___ / ___" />
+      </div>
+      <!-- You can leave a blank form-field here if you want equal spacing -->
+      <div class="form-field" style="visibility:hidden;">
+        <h1>Placeholder</h1>
+        <input type="text" />
+      </div>
+    </div>
 
-      <h2>Date:</h2>
-      <input type="date" id="worksheet-date" required />
-
-      <h2>Teacher:</h2>
-      <input type="text" id="teacher-name" placeholder="Teacher’s Name" required />
-
-      <h2>Score:</h2>
-      <input type="text" id="score" placeholder="___ / ___" />
-
-      <h2># of Questions:</h2>
-      <input type="number" id="num-questions" min="1" max="132" value="20" required />
-      <small>(Max 132 unique questions)</small>
-
-      <!-- Buttons -->
-      <br />
-      <button id="generate-btn">Generate Worksheet</button>
-      <button id="download-btn" style="display:none;">Download PDF</button>
-    </form>
+    <!-- Third Row: Number of Questions + Buttons -->
+    <div class="form-row">
+      <div class="form-field" style="width: 140px;">
+        <h1># of Questions:</h1>
+        <input type="number" id="num-questions" min="1" max="132" value="20" required />
+        <small>(Max 132 unique questions)</small>
+      </div>
+      <div>
+        <button id="generate-btn">Generate Worksheet</button>
+        <button id="download-btn" style="display:none;">Download PDF</button>
+      </div>
+    </div>
   </div>
 
   <!-- ===== WORKSHEET PREVIEW ===== -->
@@ -197,12 +228,13 @@
       // 5.1 Title (H1, bold, center)
       html += `<h1>Let’s play with numbers today! and become smarter every day &#x263A;</h1>`;
 
-      // 5.2 Details as H2, left-aligned
-      html += `<div class="detail-line"><h2>Name: ${name}</h2></div>`;
-      html += `<div class="detail-line"><h2>Age: ${age}</h2></div>`;
-      html += `<div class="detail-line"><h2>Date: ${date}</h2></div>`;
-      html += `<div class="detail-line"><h2>Teacher: ${teacher}</h2></div>`;
-      html += `<div class="detail-line"><h2>Score: ${score}</h2></div>`;
+      // 5.2 Details as H2, left-aligned (Name, Age, Date on first row; Teacher, Score on second)
+      html += '<div class="detail-line">';
+      html += `<h2>Name: ${name} Age: ${age} Date: ${date}</h2>`;
+      html += '</div>';
+      html += '<div class="detail-line">';
+      html += `<h2>Teacher: ${teacher} Score: ${score}</h2>`;
+      html += '</div>';
 
       // 5.3 Questions Section
       html += '<div class="questions-section">';
