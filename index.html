@@ -1,120 +1,269 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Multiplication Worksheet Generator</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Include html2pdf.js via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+
   <style>
+    /* ---- GLOBAL & PRINT STYLES ---- */
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
+      color: #333;
     }
-    h1 {
-      text-align: center;
-      font-size: 24px;
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 1in;
+      }
+      body {
+        width: 210mm;
+        height: 297mm;
+      }
+      /* Hide the form and buttons when printing */
+      #controls {
+        display: none;
+      }
+      /* Force each .worksheet-page to start on its own page */
+      .worksheet-page {
+        page-break-after: always;
+      }
+    }
+
+    /* ---- FORM / CONTROLS ---- */
+    #controls {
+      margin-bottom: 30px;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background-color: #f9f9f9;
+    }
+    #controls h2 {
+      margin-top: 0;
+      font-size: 1.2em;
+    }
+    #controls label {
+      display: inline-block;
+      margin-right: 8px;
       font-weight: bold;
     }
-    h2 {
-      font-size: 20px;
-      margin-top: 10px;
+    #controls input[type="text"],
+    #controls input[type="number"],
+    #controls input[type="date"] {
+      margin-right: 20px;
+      padding: 4px 6px;
+      font-size: 1em;
+      width: 120px;
     }
-    .header-section input {
+    #controls input[type="number"] {
+      width: 60px;
+    }
+    #controls button {
+      padding: 8px 16px;
+      font-size: 1em;
       margin-right: 10px;
-      padding: 5px;
-      font-size: 16px;
+      cursor: pointer;
     }
-    .worksheet {
+
+    /* ---- WORKSHEET STYLES ---- */
+    .worksheet-page {
+      width: 100%;
+      /* full width for A4 */
+      margin-bottom: 30px;
+    }
+    .worksheet-page h1 {
+      font-size: 2em;
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    .details-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 1.1em;
+      border-bottom: 1px dotted #aaa;
+      padding-bottom: 6px;
+    }
+    .details-row > div {
+      width: 48%;
+      display: flex;
+      justify-content: space-between;
+    }
+    .details-row span {
+      font-weight: bold;
+    }
+    .questions-section {
       margin-top: 20px;
-      font-size: 18px;
+    }
+    .questions-section h2 {
+      font-size: 1.2em;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #888;
+      padding-bottom: 6px;
+    }
+    .columns-container {
+      display: flex;
+      gap: 40px;
+      margin-top: 10px;
+      flex-wrap: wrap; /* if more than 2 columns, they wrap */
     }
     .column {
       flex: 1;
-      min-width: 150px;
+      min-width: 200px;
     }
     .question {
-      margin-bottom: 10px;
-    }
-    #preview {
-      padding: 20px;
-      border: 1px solid #ccc;
+      font-size: 1.5em;
+      margin-bottom: 8px;
     }
   </style>
 </head>
+
 <body>
-  <div id="preview">
-    <h1>“Let’s play with numbers today! and become smarter everyday ：）”</h1>
+  <!-- ===== CONTROLS / FORM ===== -->
+  <div id="controls">
+    <h2>Worksheet Settings</h2>
+    <form id="worksheet-form" onsubmit="return false;">
+      <!-- Row 1: Name, Age, Date -->
+      <label for="child-name">Name:</label>
+      <input type="text" id="child-name" placeholder="Child’s Name" required />
 
-    <div class="header-section">
-      <h2>
-        Name: <input type="text" id="childName">
-        Age: <input type="text" id="childAge">
-        Date: <input type="date" id="todayDate">
-      </h2>
-      <h2>
-        Teacher: <input type="text" id="teacherName">
-        Score: <input type="text" id="score">
-      </h2>
-    </div>
+      <label for="child-age">Age:</label>
+      <input type="number" id="child-age" min="1" max="18" placeholder="Age" required />
 
-    <div>
-      <label><strong>How many questions? </strong></label>
-      <input type="number" id="numQuestions" value="40" min="1" max="144">
-      <button onclick="generateQuestions()">Generate</button>
-      <button onclick="downloadPDF()">Download PDF</button>
-    </div>
+      <label for="worksheet-date">Date:</label>
+      <input type="date" id="worksheet-date" required />
 
-    <div class="worksheet" id="questionsContainer"></div>
+      <br /><br />
+
+      <!-- Row 2: Teacher, Score -->
+      <label for="teacher-name">Teacher:</label>
+      <input type="text" id="teacher-name" placeholder="Teacher’s Name" required />
+
+      <label for="score">Score:</label>
+      <input type="text" id="score" placeholder="___ / ___" />
+
+      <br /><br />
+
+      <!-- Number of Questions -->
+      <label for="num-questions"># of Questions:</label>
+      <input type="number" id="num-questions" min="1" max="132" value="20" required />
+      <small>(Max 132 unique questions)</small>
+
+      <br /><br />
+
+      <!-- Buttons -->
+      <button id="generate-btn">Generate Worksheet</button>
+      <button id="download-btn" style="display:none;">Download PDF</button>
+    </form>
   </div>
 
+  <!-- ===== WORKSHEET PREVIEW ===== -->
+  <div id="preview-area"></div>
+
   <script>
-    function generateQuestions() {
-      const num = parseInt(document.getElementById('numQuestions').value);
-      const questions = [];
-      for (let i = 2; i <= 12; i++) {
-        for (let j = 1; j <= 12; j++) {
-          questions.push(`${i} x ${j} = ______`);
+    // ---- UTILITY: Shuffle array in-place (Fisher–Yates) ----
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    // ---- MAIN: Generate Worksheet Preview ----
+    document.getElementById('generate-btn').addEventListener('click', () => {
+      // 1. Grab form values
+      const name = document.getElementById('child-name').value.trim();
+      const age = document.getElementById('child-age').value;
+      const date = document.getElementById('worksheet-date').value;
+      const teacher = document.getElementById('teacher-name').value.trim();
+      const score = document.getElementById('score').value.trim();
+      const numQuestions = parseInt(document.getElementById('num-questions').value, 10);
+
+      if (!name || !age || !date || !teacher || isNaN(numQuestions)) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+      if (numQuestions < 1 || numQuestions > 132) {
+        alert('Number of questions must be between 1 and 132.');
+        return;
+      }
+
+      // 2. Build all possible pairs 2×1 through 12×12
+      const allPairs = [];
+      for (let a = 2; a <= 12; a++) {
+        for (let b = 1; b <= 12; b++) {
+          allPairs.push({ text: `${a} × ${b} = ____` });
         }
       }
-      const shuffled = questions.sort(() => Math.random() - 0.5).slice(0, num);
 
-      const container = document.getElementById('questionsContainer');
-      container.innerHTML = '';
-      let col, count = 0;
+      // 3. Shuffle and take the requested number
+      shuffleArray(allPairs);
+      const selected = allPairs.slice(0, numQuestions);
 
-      shuffled.forEach((q, index) => {
-        if (index % 20 === 0) {
-          col = document.createElement('div');
-          col.className = 'column';
-          container.appendChild(col);
-        }
-        const div = document.createElement('div');
-        div.className = 'question';
-        div.textContent = q;
-        col.appendChild(div);
+      // 4. Split into columns of 20 each
+      const columns = [];
+      for (let i = 0; i < selected.length; i += 20) {
+        columns.push(selected.slice(i, i + 20));
+      }
+
+      // 5. Build worksheet HTML
+      let html = '';
+      html += '<div class="worksheet-page">';
+      // 5.1 Title (H1, bold, center)
+      html += `<h1>Let’s play with numbers today! and become smarter every day &#x263A;</h1>`;
+
+      // 5.2 Details row 1: Name, Age, Date
+      html += '<div class="details-row">';
+      html += `<div><span>Name: </span>${name}<span>Age: </span>${age}</div>`;
+      html += `<div><span>Date: </span>${date}</div>`;
+      html += '</div>';
+
+      // 5.3 Details row 2: Teacher, Score
+      html += '<div class="details-row">';
+      html += `<div><span>Teacher: </span>${teacher}</div>`;
+      html += `<div><span>Score: </span>${score}</div>`;
+      html += '</div>';
+
+      // 5.4 Questions Section
+      html += '<div class="questions-section">';
+      html += '<h2>Multiplication Questions</h2>';
+      html += '<div class="columns-container">';
+      columns.forEach(col => {
+        html += '<div class="column">';
+        col.forEach(item => {
+          html += `<div class="question">${item.text}</div>`;
+        });
+        html += '</div>';
       });
-    }
+      html += '</div>'; // end columns-container
+      html += '</div>'; // end questions-section
 
-    async function downloadPDF() {
-      const { jsPDF } = window.jspdf;
-      const name = document.getElementById('childName').value || '';
-      const age = document.getElementById('childAge').value || '';
-      const date = document.getElementById('todayDate').value || '';
-      const teacher = document.getElementById('teacherName').value || '';
-      const score = document.getElementById('score').value || '';
+      html += '</div>'; // end worksheet-page
 
-      html2canvas(document.getElementById('preview')).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'pt', 'a4');
-        const width = pdf.internal.pageSize.getWidth();
-        const height = pdf.internal.pageSize.getHeight();
-        pdf.addImage(imgData, 'PNG', 20, 20, width - 40, 0);
-        pdf.save(`worksheet_${name || 'student'}.pdf`);
-      });
-    }
+      // 6. Insert into preview area (overwrite any previous)
+      const previewArea = document.getElementById('preview-area');
+      previewArea.innerHTML = html;
+
+      // 7. Show the Download button
+      document.getElementById('download-btn').style.display = 'inline-block';
+    });
+
+    // ---- PDF DOWNLOAD ----
+    document.getElementById('download-btn').addEventListener('click', () => {
+      const element = document.getElementById('preview-area');
+      const options = {
+        margin:       0.5,
+        filename:     'multiplication_worksheet.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+      html2pdf().set(options).from(element).save();
+    });
   </script>
 </body>
 </html>
